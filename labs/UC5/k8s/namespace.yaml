@@ -1,0 +1,5 @@
+# Namespace dédié à l'app — isole les ressources de l'ecommerce-app.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ecommerce

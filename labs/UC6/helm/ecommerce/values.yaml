@@ -1,0 +1,49 @@
+# Valeurs PAR DÉFAUT du chart (surchargées par values-<env>.yaml).
+# Tout ce qui VARIE entre environnements est ici → un seul jeu de templates.
+
+namespace: ecommerce
+
+image:
+  pullPolicy: IfNotPresent       # images importées dans k3d (UC5) → pas de pull externe
+
+# /health et /alive ne sont mappés QU'EN Development (cf. MapDefaultEndpoints de l'app).
+# On garde donc Development même en preprod pour que les probes fonctionnent en démo.
+env: Development
+
+resources:
+  requests: { cpu: 100m, memory: 128Mi }
+  limits:   { cpu: 500m, memory: 256Mi }
+
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+
+ingress:
+  enabled: true
+  host: ecommerce.localhost
+  service: web                   # seul le frontend est exposé
+
+# La liste des services : le template "range" dessus pour générer Deployment+Service+HPA.
+# `discovery` injecte les variables services__<nom>__http__0 (service discovery Aspire hors AppHost).
+services:
+  catalog:
+    image: ecommerce-catalog:latest
+    replicas: 1
+  ordering:
+    image: ecommerce-ordering:latest
+    replicas: 1
+    discovery:
+      - name: catalog            # Ordering appelle Catalog directement
+  gateway:
+    image: ecommerce-gateway:latest
+    replicas: 1
+    discovery:
+      - name: catalog
+      - name: ordering
+  web:
+    image: ecommerce-web:latest
+    replicas: 1
+    discovery:
+      - name: gateway

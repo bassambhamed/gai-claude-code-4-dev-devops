@@ -1,0 +1,49 @@
+# CI — Intégration continue de l'ecommerce-app (.NET)
+# Se déclenche à chaque push et chaque Pull Request : build, tests, scan sécurité de l'image.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-test:
+    name: Build & tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      - name: Installer le SDK .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restaurer les dépendances
+        run: dotnet restore
+
+      - name: Compiler (Release)
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Lancer les tests
+        run: dotnet test --configuration Release --no-build --verbosity normal
+
+  image-scan:
+    name: Build image & scan Trivy
+    runs-on: ubuntu-latest
+    needs: build-test          # ne tourne que si build-test a réussi
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      - name: Construire l'image du service Catalog
+        run: docker build -t ecommerce-catalog:${{ github.sha }} -f src/ECommerce.Catalog.Api/Dockerfile .
+
+      - name: Scanner l'image (vulnérabilités)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ecommerce-catalog:${{ github.sha }}
+          severity: CRITICAL,HIGH      # échoue le job si faille critique/haute
+          exit-code: "1"

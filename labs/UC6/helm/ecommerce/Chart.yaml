@@ -1,0 +1,6 @@
+apiVersion: v2
+name: ecommerce
+description: Chart Helm de l'ecommerce-app (.NET Aspire) — Catalog, Ordering, Gateway, Web.
+type: application
+version: 0.1.0           # version DU CHART (incrémentée à chaque changement de templates)
+appVersion: "1.0.0"      # version de l'APPLICATION packagée

@@ -1,0 +1,57 @@
+# docker-compose de DEV (UC4) — lance les 4 services ensemble, hors Aspire.
+# Illustratif : versions/ports à adapter. Les données sont in-memory → tout est perdu à l'arrêt.
+#
+# Service discovery : hors Aspire, on injecte manuellement les URLs via les variables
+# d'environnement au format Aspire `services__<nom>__http__0`. C'est ce qui remplace le
+# `WithReference(...)` de l'AppHost.
+
+services:
+  catalog:
+    build:
+      context: .                                   # contexte = racine du repo
+      dockerfile: src/ECommerce.Catalog.Api/Dockerfile
+    image: ecommerce-catalog:latest
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development          # expose /health et /openapi en dev
+      - ASPNETCORE_HTTP_PORTS=8080
+
+  ordering:
+    build:
+      context: .
+      dockerfile: src/ECommerce.Ordering.Api/Dockerfile
+    image: ecommerce-ordering:latest
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080
+      # Ordering appelle Catalog DIRECTEMENT (pas via le gateway)
+      - services__catalog__http__0=http://catalog:8080
+    depends_on:
+      - catalog
+
+  gateway:
+    build:
+      context: .
+      dockerfile: src/ECommerce.Gateway/Dockerfile
+    image: ecommerce-gateway:latest
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080
+      - services__catalog__http__0=http://catalog:8080
+      - services__ordering__http__0=http://ordering:8080
+    depends_on:
+      - catalog
+      - ordering
+
+  web:
+    build:
+      context: .
+      dockerfile: src/ECommerce.Web/Dockerfile
+    image: ecommerce-web:latest
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080
+      - services__gateway__http__0=http://gateway:8080
+    ports:
+      - "8080:8080"                                 # seul service exposé sur l'hôte
+    depends_on:
+      - gateway

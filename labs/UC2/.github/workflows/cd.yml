@@ -1,0 +1,38 @@
+# CD — Déploiement continu de l'ecommerce-app
+# Se déclenche après un CI réussi sur main. Le déploiement PROD passe par un GATE MANUEL
+# (environnement protégé) : un humain doit approuver avant que ça parte en production.
+name: CD
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  deploy-preprod:
+    name: Déployer en pré-prod
+    # ne déploie que si le CI s'est terminé avec succès
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    environment: preprod
+    steps:
+      - uses: actions/checkout@v4
+      - name: Déployer sur le cluster pré-prod
+        run: |
+          echo "Déploiement Helm vers la pré-prod…"
+          # helm upgrade --install ecommerce ./charts/ecommerce -f values-preprod.yaml
+
+  deploy-prod:
+    name: Déployer en production (gate manuel)
+    needs: deploy-preprod
+    runs-on: ubuntu-latest
+    # ⚠️ Environnement 'production' protégé dans GitHub : exige une APPROBATION HUMAINE
+    # (Settings > Environments > production > Required reviewers).
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Déployer sur le cluster prod
+        run: |
+          echo "Déploiement Helm vers la PRODUCTION (après approbation)…"
+          # helm upgrade --install ecommerce ./charts/ecommerce -f values-prod.yaml

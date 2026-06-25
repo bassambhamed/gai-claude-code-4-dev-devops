@@ -1,0 +1,23 @@
+# Surcharge PREPROD : plus de réplicas, ressources plus larges, autoscaling actif, host dédié.
+# Usage : helm upgrade --install ecommerce helm/ecommerce -n ecommerce --create-namespace -f values-preprod.yaml
+# (Helm fusionne en profondeur avec values.yaml : on ne réécrit que ce qui change.)
+
+resources:
+  requests: { cpu: 250m, memory: 256Mi }
+  limits:   { cpu: "1",  memory: 512Mi }
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 8
+  targetCPUUtilizationPercentage: 60
+
+ingress:
+  host: ecommerce.preprod.local
+
+# On ne surcharge que les services qui changent (le reste hérite de values.yaml).
+services:
+  gateway:
+    replicas: 2
+  web:
+    replicas: 2

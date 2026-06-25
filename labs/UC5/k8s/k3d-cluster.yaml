@@ -1,0 +1,18 @@
+# Config k3d (UC5) — cluster local reproductible : 1 serveur + 2 agents = "3 nœuds".
+# Crée aussi un registre local et expose l'ingress Traefik sur le port 8080 de l'hôte.
+# Usage : k3d cluster create --config k8s/k3d-cluster.yaml
+apiVersion: k3d.io/v1alpha5
+kind: Simple
+metadata:
+  name: ecommerce
+servers: 1                       # nœud control-plane
+agents: 2                        # nœuds workers (1 + 2 = 3 nœuds au total)
+registries:
+  create:
+    name: registry.localhost     # registre local pour pousser les images
+    host: "0.0.0.0"
+    hostPort: "5000"
+ports:
+  - port: 8080:80                # hôte 8080 → port 80 du loadbalancer (ingress Traefik)
+    nodeFilters:
+      - loadbalancer

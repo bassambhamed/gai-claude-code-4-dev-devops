@@ -1,0 +1,67 @@
+# Catalog — Deployment + Service + HPA.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: catalog
+  namespace: ecommerce
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: catalog }
+  template:
+    metadata:
+      labels: { app: catalog }
+    spec:
+      containers:
+        - name: catalog
+          image: ecommerce-catalog:latest
+          imagePullPolicy: IfNotPresent        # image importée dans k3d (pas de pull externe)
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: Development                # expose /health et /alive (mappés en Development)
+            - name: ASPNETCORE_HTTP_PORTS
+              value: "8080"
+          readinessProbe:                       # prêt à recevoir du trafic ?
+            httpGet: { path: /health, port: 8080 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:                        # encore vivant ? sinon redémarrage
+            httpGet: { path: /alive, port: 8080 }
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }   # requis par le HPA (calcul du %CPU)
+            limits: { cpu: 500m, memory: 256Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: catalog                                 # nom DNS interne : http://catalog:8080
+  namespace: ecommerce
+spec:
+  selector: { app: catalog }
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: catalog
+  namespace: ecommerce
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: catalog
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70               # +1 pod si la charge CPU moyenne dépasse 70 %

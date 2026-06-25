@@ -1,0 +1,8 @@
+# Surcharge DEV : minimal, jetable. Un seul réplica par service, pas d'autoscaling.
+# Usage : helm upgrade --install ecommerce helm/ecommerce -n ecommerce --create-namespace -f values-dev.yaml
+
+autoscaling:
+  enabled: false                 # en dev, pas besoin d'autoscaler
+
+ingress:
+  host: ecommerce.localhost      # accès local via k3d (http://ecommerce.localhost:8080)

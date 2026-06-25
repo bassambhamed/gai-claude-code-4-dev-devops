@@ -1,0 +1,354 @@
+<title>ecommerce-ops — plugin Claude Code</title>
+<style>
+  :root {
+    --ink: #14171c;
+    --ink-soft: #1c2128;
+    --paper: #f6f7f4;
+    --card: #ffffff;
+    --text: #22262d;
+    --muted: #6a7280;
+    --line: #e3e6e1;
+    --line-soft: #eef0ec;
+    --accent: #0d7d88;
+    --accent-bright: #14a0ad;
+    --block: #c2453a;
+    --ask: #b9810f;
+    --info: #3a72b8;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --maxw: 940px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--text);
+    font-family: var(--sans);
+    line-height: 1.6;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code, kbd { font-family: var(--mono); }
+  h2, h3 { text-wrap: balance; }
+
+  /* ---------- Hero / terminal thesis ---------- */
+  header { border-bottom: 1px solid var(--line); }
+  .hero { padding: 64px 0 52px; display: grid; gap: 28px; }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  h1 {
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: clamp(30px, 5.4vw, 50px);
+    line-height: 1.05;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  h1 .tilde { color: var(--accent); }
+  .lede { font-size: 18px; color: var(--muted); max-width: 60ch; margin: 0; }
+  .meta-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pill {
+    font-family: var(--mono); font-size: 12px;
+    border: 1px solid var(--line); background: var(--card);
+    padding: 4px 10px; border-radius: 999px; color: var(--muted);
+  }
+
+  .terminal {
+    background: var(--ink); border-radius: 10px; overflow: hidden;
+    box-shadow: 0 18px 40px -24px rgba(20,23,28,0.55);
+    border: 1px solid #2a2f37;
+  }
+  .term-bar {
+    display: flex; align-items: center; gap: 7px;
+    padding: 11px 14px; background: var(--ink-soft); border-bottom: 1px solid #2a2f37;
+  }
+  .dot { width: 11px; height: 11px; border-radius: 50%; }
+  .dot.r { background: #e0584b; } .dot.y { background: #e0a23b; } .dot.g { background: #4caa6a; }
+  .term-title { font-family: var(--mono); font-size: 12px; color: #8b929d; margin-left: 8px; }
+  .term-body {
+    padding: 18px 18px 22px; font-family: var(--mono); font-size: 13.5px; line-height: 1.85;
+    color: #d7dbe2; overflow-x: auto;
+  }
+  .term-body .c { color: #6f7884; }            /* comment */
+  .term-body .p { color: var(--accent-bright); }/* prompt $ */
+  .term-body .k { color: #e6c07b; }            /* command keyword */
+
+  /* ---------- Sections ---------- */
+  section { padding: 56px 0; border-bottom: 1px solid var(--line-soft); }
+  .sec-head { display: flex; align-items: baseline; gap: 14px; margin: 0 0 26px; }
+  .sec-num {
+    font-family: var(--mono); font-size: 13px; color: var(--accent);
+    border: 1px solid var(--line); border-radius: 6px; padding: 2px 8px;
+  }
+  h2 { font-size: clamp(22px, 3.4vw, 28px); margin: 0; font-weight: 650; letter-spacing: -0.01em; }
+  .sec-sub { color: var(--muted); margin: 8px 0 0; max-width: 64ch; }
+
+  /* ---------- Component grid ---------- */
+  .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px 18px 16px;
+  }
+  .card .tag {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  .card h3 { font-family: var(--mono); font-size: 16px; margin: 6px 0 8px; font-weight: 600; }
+  .card p { margin: 0; font-size: 14.5px; color: var(--muted); }
+  .card .trig { display: inline-block; margin-top: 12px; font-size: 12px; font-family: var(--mono); }
+  .trig.auto { color: var(--accent); }
+  .trig.explicit { color: var(--info); }
+  .trig.det { color: var(--ask); }
+
+  /* ---------- OS tabs ---------- */
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+  .tab {
+    font-family: var(--mono); font-size: 13px; cursor: pointer;
+    border: 1px solid var(--line); background: var(--card); color: var(--muted);
+    padding: 9px 16px; border-radius: 8px; transition: all .15s ease;
+  }
+  .tab[aria-selected="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .panel { display: none; }
+  .panel.show { display: block; animation: fade .25s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  .note {
+    margin-top: 14px; border-left: 3px solid var(--ask); background: #fbf6ea;
+    padding: 12px 16px; border-radius: 0 8px 8px 0; font-size: 14px; color: #5d4d22;
+  }
+  .note b { color: #4a3c14; }
+
+  /* ---------- Tables ---------- */
+  .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+  th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+  th { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; background: #fbfbfa; }
+  tr:last-child td { border-bottom: none; }
+  td code { background: #eef0ec; padding: 2px 6px; border-radius: 5px; font-size: 13px; }
+
+  /* ---------- Scenario flow ---------- */
+  .flow { display: grid; gap: 0; }
+  .step { display: grid; grid-template-columns: 44px 1fr; gap: 18px; padding: 18px 0; border-bottom: 1px solid var(--line-soft); }
+  .step:last-child { border-bottom: none; }
+  .step .n {
+    font-family: var(--mono); font-size: 14px; font-weight: 600;
+    width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center;
+    background: var(--ink); color: #fff;
+  }
+  .step h3 { margin: 4px 0 6px; font-size: 16.5px; }
+  .step p { margin: 0; color: var(--muted); font-size: 14.5px; }
+  .step code { background: #eef0ec; padding: 2px 6px; border-radius: 5px; font-size: 13px; font-family: var(--mono); }
+
+  /* guardrail badges */
+  .gbadge { font-family: var(--mono); font-size: 11px; padding: 2px 8px; border-radius: 5px; white-space: nowrap; }
+  .gbadge.block { background: #fbeae8; color: var(--block); }
+  .gbadge.ask { background: #fbf2dd; color: var(--ask); }
+  .gbadge.info { background: #e8f0fa; color: var(--info); }
+
+  /* ---------- Skills vs hooks ---------- */
+  .vs { display: grid; gap: 16px; grid-template-columns: 1fr 1fr; }
+  .vs .col { border: 1px solid var(--line); border-radius: 10px; padding: 20px; background: var(--card); }
+  .vs .col.hooks { border-color: var(--accent); }
+  .vs h3 { margin: 0 0 4px; font-size: 17px; }
+  .vs .who { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+  .vs ul { margin: 0; padding-left: 18px; color: var(--muted); font-size: 14.5px; }
+  .vs li { margin-bottom: 7px; }
+
+  footer { padding: 40px 0 64px; color: var(--muted); font-size: 13.5px; font-family: var(--mono); }
+
+  @media (max-width: 620px) {
+    .vs { grid-template-columns: 1fr; }
+    .step { grid-template-columns: 32px 1fr; gap: 12px; }
+    .step .n { width: 28px; height: 28px; font-size: 12px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+
+<header>
+  <div class="wrap hero">
+    <span class="eyebrow">Plugin Claude Code · Ops toolkit</span>
+    <h1><span class="tilde">~</span> ecommerce-ops</h1>
+    <p class="lede">Le chemin vers la prod de l'ecommerce-app, empaqueté : conteneuriser → déployer sur Kubernetes (k3d) → diagnostiquer — avec des garde-fous déterministes que le harnais applique, pas l'IA.</p>
+    <div class="meta-row">
+      <span class="pill">3 skills</span>
+      <span class="pill">3 hooks</span>
+      <span class="pill">2 commands</span>
+      <span class="pill">1 agent</span>
+      <span class="pill">v0.1.0 · MIT</span>
+    </div>
+    <div class="terminal">
+      <div class="term-bar">
+        <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+        <span class="term-title">claude — installation</span>
+      </div>
+      <div class="term-body">
+<span class="c"># À la racine du repo, dans Claude Code :</span>
+<span class="p">&gt;</span> <span class="k">/plugin</span> marketplace add .
+<span class="p">&gt;</span> <span class="k">/plugin</span> install ecommerce-ops@ecommerce-ops-marketplace
+<span class="c"># puis, au quotidien :</span>
+<span class="p">&gt;</span> <span class="k">/ops-doctor</span>          <span class="c"># check santé</span>
+<span class="p">&gt;</span> <span class="k">/ship</span> catalog          <span class="c"># conteneurise + déploie</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">01</span><div><h2>Ce qu'il y a dans la boîte</h2><p class="sec-sub">Quatre familles de composants. Les skills se déclenchent seuls, les commands se tapent, les hooks tournent en arrière-plan.</p></div></div>
+    <div class="grid">
+      <div class="card"><span class="tag">Skill</span><h3>containerize</h3><p>Dockerfiles multi-étapes, runtime chiselé non-root, build + scan Trivy.</p><span class="trig auto">↻ déclenchement auto</span></div>
+      <div class="card"><span class="tag">Skill</span><h3>k8s-bootstrap</h3><p>Cluster k3d reproductible, import des images, <code>kubectl apply</code> des manifests.</p><span class="trig auto">↻ déclenchement auto</span></div>
+      <div class="card"><span class="tag">Skill</span><h3>k8s-debug-pod</h3><p>Diagnostic d'un pod en échec (CrashLoop, OOM…), cause racine + correctif.</p><span class="trig auto">↻ déclenchement auto</span></div>
+      <div class="card"><span class="tag">Command</span><h3>/ship</h3><p>Orchestre conteneurisation → import k3d → déploiement → vérif <code>/health</code>.</p><span class="trig explicit">→ tapé par l'utilisateur</span></div>
+      <div class="card"><span class="tag">Command</span><h3>/ops-doctor</h3><p>État des lieux outils + cluster + pods, strictement en lecture seule.</p><span class="trig explicit">→ tapé par l'utilisateur</span></div>
+      <div class="card"><span class="tag">Agent</span><h3>ops-engineer</h3><p>Sous-agent Ops read-only pour investiguer un incident infra.</p><span class="trig explicit">→ délégation</span></div>
+      <div class="card"><span class="tag">Hook</span><h3>secret-scan</h3><p>PreToolUse(Bash) : bloque un commit contenant un secret.</p><span class="trig det">⛓ déterministe</span></div>
+      <div class="card"><span class="tag">Hook</span><h3>guard-destructive</h3><p>PreToolUse(Bash) : confirmation avant <code>delete</code>/<code>destroy</code>/<code>prune</code>.</p><span class="trig det">⛓ déterministe</span></div>
+      <div class="card"><span class="tag">Hook</span><h3>session-start</h3><p>SessionStart : injecte le rappel d'environnement (PATH .NET, commandes clés).</p><span class="trig det">⛓ déterministe</span></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">02</span><div><h2>Installation par OS</h2><p class="sec-sub">Claude Code et les commandes <code>/plugin</code> sont identiques partout. Seuls changent les outils Ops — et, sur Windows, le shell qui exécute les hooks.</p></div></div>
+    <div class="tabs" role="tablist" aria-label="Système d'exploitation">
+      <button class="tab" role="tab" aria-selected="true" aria-controls="mac" id="t-mac">🍎 macOS</button>
+      <button class="tab" role="tab" aria-selected="false" aria-controls="linux" id="t-linux">🐧 Linux</button>
+      <button class="tab" role="tab" aria-selected="false" aria-controls="win" id="t-win">🪟 Windows</button>
+    </div>
+
+    <div class="panel show" id="mac" role="tabpanel" aria-labelledby="t-mac">
+      <div class="terminal"><div class="term-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="term-title">zsh — macOS</span></div><div class="term-body">
+<span class="c"># Claude Code</span>
+<span class="p">$</span> npm install -g @anthropic-ai/claude-code   <span class="c"># ou: brew install claude-code</span>
+<span class="c"># Outils Ops</span>
+<span class="p">$</span> brew install git docker k3d kubectl trivy
+<span class="p">$</span> brew install --cask dotnet-sdk             <span class="c"># .NET 10</span>
+<span class="c"># bash est déjà présent → les hooks .sh tournent nativement ✅</span>
+      </div></div>
+    </div>
+
+    <div class="panel" id="linux" role="tabpanel" aria-labelledby="t-linux">
+      <div class="terminal"><div class="term-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="term-title">bash — Debian / Ubuntu</span></div><div class="term-body">
+<span class="c"># Claude Code</span>
+<span class="p">$</span> npm install -g @anthropic-ai/claude-code
+<span class="c"># Outils Ops</span>
+<span class="p">$</span> sudo apt update &amp;&amp; sudo apt install -y git bash curl docker.io
+<span class="p">$</span> curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
+<span class="p">$</span> sudo snap install kubectl --classic
+<span class="p">$</span> sudo apt install -y trivy dotnet-sdk-10.0
+<span class="c"># bash natif → hooks .sh OK ✅</span>
+      </div></div>
+    </div>
+
+    <div class="panel" id="win" role="tabpanel" aria-labelledby="t-win">
+      <div class="terminal"><div class="term-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="term-title">PowerShell — Windows</span></div><div class="term-body">
+<span class="c"># Claude Code</span>
+<span class="p">&gt;</span> npm install -g @anthropic-ai/claude-code
+<span class="c"># Outils Ops via winget</span>
+<span class="p">&gt;</span> winget install Git.Git Docker.DockerDesktop Kubernetes.kubectl `
+            AquaSecurity.Trivy Microsoft.DotNet.SDK.10
+<span class="p">&gt;</span> choco install k3d                           <span class="c"># Chocolatey ou binaire GitHub</span>
+      </div></div>
+      <div class="note"><b>⚠️ Hooks sur Windows.</b> Les hooks sont des scripts <code>bash</code> (<code>.sh</code>). Installe <b>Git for Windows</b> (fournit <code>bash</code>) ou active <b>WSL2</b>, et lance Claude Code depuis Git Bash / WSL pour que <code>secret-scan</code>, <code>guard-destructive</code> et <code>session-start</code> s'exécutent. En CMD/PowerShell pur, les <code>.sh</code> ne tournent pas.</div>
+    </div>
+
+    <p style="margin-top:22px;color:var(--muted);font-size:14px;">Vérifier les prérequis (tous OS) : <code style="background:#eef0ec;padding:2px 6px;border-radius:5px;font-family:var(--mono);font-size:13px;">git --version &amp;&amp; docker --version &amp;&amp; k3d version &amp;&amp; kubectl version --client &amp;&amp; trivy --version &amp;&amp; dotnet --version</code></p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">03</span><div><h2>Utilisation au quotidien</h2><p class="sec-sub">Trois mécaniques de déclenchement : explicite (commands), automatique (skills), arrière-plan (hooks).</p></div></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Je veux…</th><th>Je tape…</th><th>Ce qui se passe</th></tr></thead>
+        <tbody>
+          <tr><td>Un check santé de l'environnement</td><td><code>/ops-doctor</code></td><td>Inventaire outils + cluster + pods, en lecture seule</td></tr>
+          <tr><td>Conteneuriser + déployer un service</td><td><code>/ship catalog</code></td><td><code>containerize</code> → import k3d → <code>kubectl apply</code> → <code>/health</code></td></tr>
+          <tr><td>Tout déployer</td><td><code>/ship</code></td><td>Idem pour les 4 services</td></tr>
+          <tr><td>Diagnostiquer un pod qui plante</td><td>« utilise l'agent <b>ops-engineer</b> pour le pod ordering »</td><td>Investigation read-only + correctif proposé</td></tr>
+          <tr><td>Un Dockerfile à la demande</td><td>« écris un Dockerfile pour gateway »</td><td>Le skill <b>containerize</b> se déclenche tout seul</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">04</span><div><h2>Scénario de bout en bout</h2><p class="sec-sub">Bob, nouvel arrivant, doit déployer le service <code>catalog</code> et le voir tourner.</p></div></div>
+    <div class="flow">
+      <div class="step"><div class="n">0</div><div><h3>Démarrage de session <span class="gbadge info">session-start</span></h3><p>Le hook <code>SessionStart</code> injecte le rappel : PATH du SDK .NET 10, commande de lancement, skills et garde-fous actifs. Bob n'a rien à mémoriser.</p></div></div>
+      <div class="step"><div class="n">1</div><div><h3>État des lieux — <code>/ops-doctor</code></h3><p>Inspection en lecture seule de docker, k3d, kubectl, trivy, dotnet, du cluster et des pods → tableau ✅/⚠️/❌. Verdict : outils OK, <b>aucun cluster</b> → action recommandée : <code>/ship</code>.</p></div></div>
+      <div class="step"><div class="n">2</div><div><h3>Conteneuriser + déployer — <code>/ship catalog</code></h3><p><code>containerize</code> génère le Dockerfile et scanne l'image (Trivy HIGH/CRITICAL) ; <code>k8s-bootstrap</code> crée le cluster k3d, importe l'image, applique <code>k8s/</code> ; vérification du rollout + <code>curl /health</code>.</p></div></div>
+      <div class="step"><div class="n">3</div><div><h3>Garde-fou destructif <span class="gbadge ask">guard-destructive · ask</span></h3><p>Bob veut repartir de zéro : <code>k3d cluster delete</code>. Le hook intercepte, renvoie une décision <b>ask</b>, Claude <b>demande confirmation</b> avant de détruire. Bob valide en connaissance de cause.</p></div></div>
+      <div class="step"><div class="n">4</div><div><h3>Pod en échec → agent <code>ops-engineer</code> + <code>k8s-debug-pod</code></h3><p>Le pod <code>ordering</code> est en <code>CrashLoopBackOff</code>. L'agent travaille en lecture seule (<code>describe</code>, <code>logs --previous</code>, <code>events</code>), formule une hypothèse (ex. <code>limits.memory</code> trop bas → OOMKilled) et <b>propose</b> un correctif — appliqué seulement après accord.</p></div></div>
+      <div class="step"><div class="n">5</div><div><h3>Commit protégé <span class="gbadge block">secret-scan · block</span></h3><p>Bob a collé un token par mégarde et commit. Le hook détecte le motif dans l'index, <b>bloque le commit</b> (exit 2) et pointe la ligne fautive. Bob bascule sur une variable d'env, recommit → ça passe.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section style="border-bottom:none;">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">05</span><div><h2>Le point clé : skills vs hooks</h2><p class="sec-sub">Le plugin combine la souplesse des skills et la fiabilité des hooks.</p></div></div>
+    <div class="vs">
+      <div class="col">
+        <h3>Skills · Commands · Agent</h3>
+        <div class="who">// l'IA mobilise quand c'est pertinent</div>
+        <ul>
+          <li>Souples et contextuels</li>
+          <li>Déclenchés selon le jugement du modèle</li>
+          <li>Idéal pour la productivité et l'orchestration</li>
+          <li>Mais : c'est le modèle qui décide</li>
+        </ul>
+      </div>
+      <div class="col hooks">
+        <h3>Hooks</h3>
+        <div class="who">// le harnais applique, toujours</div>
+        <ul>
+          <li>Déterministes, indépendants du « jugement » du modèle</li>
+          <li><code>secret-scan</code> bloquera <b>toujours</b> un commit avec secret</li>
+          <li><code>guard-destructive</code> demandera <b>toujours</b> confirmation</li>
+          <li>C'est ce qui rend un garde-fou <i>fiable</i></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">ecommerce-ops · plugin Claude Code · supports de formation Ops (UC1→UC9) · Bassem Ben Hamed</div>
+</footer>
+
+<script>
+  (function () {
+    var tabs = document.querySelectorAll('.tab');
+    var panels = document.querySelectorAll('.panel');
+    function select(tab) {
+      tabs.forEach(function (t) { t.setAttribute('aria-selected', String(t === tab)); });
+      panels.forEach(function (p) { p.classList.toggle('show', p.id === tab.getAttribute('aria-controls')); });
+    }
+    tabs.forEach(function (tab, i) {
+      tab.addEventListener('click', function () { select(tab); });
+      tab.addEventListener('keydown', function (e) {
+        if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+          e.preventDefault();
+          var next = e.key === 'ArrowRight' ? (i + 1) % tabs.length : (i - 1 + tabs.length) % tabs.length;
+          tabs[next].focus(); select(tabs[next]);
+        }
+      });
+    });
+  })();
+</script>

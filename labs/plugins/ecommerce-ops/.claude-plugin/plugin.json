@@ -1,0 +1,11 @@
+{
+  "name": "ecommerce-ops",
+  "version": "0.1.0",
+  "description": "Boîte à outils Ops pour l'ecommerce-app : conteneuriser, déployer sur Kubernetes (k3d) et diagnostiquer les pods — avec des garde-fous déterministes (scan de secrets, confirmation sur commandes destructives).",
+  "author": {
+    "name": "Bassem Ben Hamed",
+    "email": "bassem.benhamed@digital-innovation-partner.ch"
+  },
+  "keywords": ["ops", "devops", "kubernetes", "docker", "dotnet", "aspire"],
+  "license": "MIT"
+}

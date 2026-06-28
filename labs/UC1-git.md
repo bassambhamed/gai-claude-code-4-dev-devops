@@ -114,7 +114,7 @@ git branch -M main                # nomme la branche principale "main"
 git status                        # ⚠️ contrôle : aucun secret / .env ne doit apparaître
 git add .                         # indexe tout le projet (.claude/ inclus)
 git commit -m "chore: commit initial de l'app ecommerce"
-gh repo create ecommerce-app --private --source=. --remote=origin --push
+gh repo create ecommerce-app-dev --private --source=. --remote=origin --push
 ```
 
 ### ✅ Vérifier à la main

@@ -1,0 +1,188 @@
+@page "/products"
+@using ECommerce.Web.Services
+@inject CatalogApiClient Catalog
+@inject OrderingApiClient Ordering
+@rendermode InteractiveServer
+
+<PageTitle>Catalog</PageTitle>
+
+<h1>Catalog</h1>
+
+@if (_loadError)
+{
+    @* État d'ERREUR explicite : un échec réseau ne ressemble plus à un "catalogue vide". *@
+    <div class="alert alert-danger d-flex align-items-center justify-content-between" role="alert">
+        <span>Couldn't load the catalog.</span>
+        <button class="btn btn-sm btn-outline-danger" @onclick="Load">Retry</button>
+    </div>
+}
+else if (_products is null)
+{
+    @* État de CHARGEMENT : skeleton accessible plutôt qu'un simple texte. *@
+    <div class="table-responsive" aria-hidden="true">
+        <table class="table placeholder-glow">
+            <tbody>
+                @for (var i = 0; i < 4; i++)
+                {
+                    <tr>
+                        <td><span class="placeholder col-6"></span></td>
+                        <td><span class="placeholder col-8"></span></td>
+                        <td class="text-end"><span class="placeholder col-3"></span></td>
+                        <td class="text-end"><span class="placeholder col-4"></span></td>
+                        <td></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <span class="visually-hidden" role="status">Loading products…</span>
+}
+else if (_products.Count == 0)
+{
+    <p class="text-muted"><em>No products available right now.</em></p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <caption class="visually-hidden">List of products with price, stock and add-to-cart action</caption>
+            <thead>
+                <tr>
+                    <th scope="col">Product</th>
+                    <th scope="col">Description</th>
+                    <th scope="col" class="text-end">Price</th>
+                    <th scope="col" class="text-end">Stock</th>
+                    <th scope="col"><span class="visually-hidden">Actions</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in _products)
+                {
+                    <tr>
+                        <th scope="row" class="fw-normal">@p.Name</th>
+                        <td>@p.Description</td>
+                        <td class="text-end">@p.Price.ToString("C")</td>
+                        <td class="text-end">
+                            @* Statut stock : couleur + TEXTE (jamais la couleur seule — a11y daltoniens). *@
+                            <span class="badge @(p.AvailableStock > 0 ? "text-bg-success" : "text-bg-secondary")">
+                                @(p.AvailableStock > 0 ? $"{p.AvailableStock} in stock" : "Out of stock")
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-outline-primary"
+                                    @onclick="() => AddToCart(p)"
+                                    disabled="@(p.AvailableStock == 0)"
+                                    aria-label="@($"Add {p.Name} to cart")">
+                                Add
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <section aria-labelledby="cart-heading">
+        <h2 id="cart-heading">Cart</h2>
+        @if (_cart.Count == 0)
+        {
+            <p class="text-muted"><em>Your cart is empty.</em></p>
+        }
+        else
+        {
+            <ul class="list-group mb-3" style="max-width: 480px">
+                @foreach (var line in _cart)
+                {
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>@line.Value × @line.Key.Name</span>
+                        <span class="text-muted">@line.Key.Price.ToString("C")</span>
+                    </li>
+                }
+            </ul>
+
+            <div class="mb-2">
+                <label for="customer" class="form-label">Customer name</label>
+                <input id="customer" class="form-control" style="max-width: 320px" @bind="_customer" />
+            </div>
+            <button class="btn btn-primary" @onclick="PlaceOrder" disabled="@_placing">
+                @if (_placing)
+                {
+                    <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+                    <span>Placing…</span>
+                }
+                else
+                {
+                    <text>Place order</text>
+                }
+            </button>
+        }
+    </section>
+
+    @if (!string.IsNullOrEmpty(_message))
+    {
+        <div class="alert @(_isError ? "alert-danger" : "alert-success") mt-3" role="alert" aria-live="polite">@_message</div>
+    }
+}
+
+@code {
+    private IReadOnlyList<ProductDto>? _products;
+    private readonly Dictionary<ProductDto, int> _cart = new();
+    private string _customer = "";
+    private bool _placing;
+    private string? _message;
+    private bool _isError;
+    private bool _loadError;
+
+    protected override async Task OnInitializedAsync() => await Load();
+
+    private async Task Load()
+    {
+        _loadError = false;
+        _products = null;
+        try
+        {
+            _products = await Catalog.GetProductsAsync();
+        }
+        catch
+        {
+            _loadError = true;   // distingue "erreur réseau" de "catalogue vide"
+        }
+    }
+
+    private void AddToCart(ProductDto product)
+    {
+        _cart[product] = _cart.TryGetValue(product, out var qty) ? qty + 1 : 1;
+        _message = null;
+    }
+
+    private async Task PlaceOrder()
+    {
+        if (string.IsNullOrWhiteSpace(_customer))
+        {
+            _message = "Please enter a customer name.";
+            _isError = true;
+            return;
+        }
+
+        _placing = true;
+        var order = new CreateOrderDto(
+            _customer,
+            _cart.Select(c => new OrderLineDto(c.Key.Id, c.Value)).ToList());
+
+        var (success, error) = await Ordering.CreateOrderAsync(order);
+        _placing = false;
+
+        if (success)
+        {
+            _message = "Order placed successfully!";
+            _isError = false;
+            _cart.Clear();
+            _customer = "";
+        }
+        else
+        {
+            _message = $"Failed to place order: {error}";
+            _isError = true;
+        }
+    }
+}

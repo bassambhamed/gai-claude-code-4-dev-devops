@@ -65,6 +65,7 @@ Tout se passe dans la copie de travail `ecommerce-app/` (adapter le chemin `../l
 
 ```bash
 cd ecommerce-app
+git switch -c demo/multi-agents       # (recommandé) branche dédiée : main reste intacte, démo réversible
 
 # 1) Installer le système d'agents (+ exemple de blockers)
 cp -r ../labs/UC-sub-agents/.claude .

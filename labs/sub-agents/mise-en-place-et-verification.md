@@ -29,6 +29,30 @@ en `../labs/UC-sub-agents` (à adapter à ton arborescence).
 
 ---
 
+## Étape 0 — (recommandé) Créer une branche dédiée
+
+Ce n'est **pas obligatoire** — les sous-agents s'exécutent sur n'importe quelle branche — mais c'est
+**fortement recommandé** : le nettoyage (§1), le seed et les modifications des agents sont nombreux
+et destructifs. Une branche dédiée garde `main` **intacte** et rend toute la démo **réversible**.
+
+```bash
+git switch -c demo/multi-agents       # ou : git checkout -b demo/multi-agents
+```
+
+- L'orchestrateur s'appuie sur `git diff main...HEAD` : ce contexte n'a de sens que sur une branche
+  **partant de `main`** (sur `main` lui-même, `main...HEAD` est vide).
+- **Tout annuler** à la fin de la démo :
+  ```bash
+  git switch main && git branch -D demo/multi-agents
+  ```
+
+> **Conseil (diff propre).** Après l'installation (§2), tu peux **committer la base** —
+> `git add -A && git commit -m "chore: table rase + système multi-agents + seed"` — pour que les
+> changements **des agents** apparaissent ensuite comme un diff **séparé et lisible** : `git diff`
+> (§9) ne montrera alors que leur travail, pas le setup.
+
+---
+
 ## Étape 1 — Nettoyer (table rase) : le prompt de départ
 
 Première action de la démo : demander à Claude de **repartir d'une base propre**. Colle ce **prompt**

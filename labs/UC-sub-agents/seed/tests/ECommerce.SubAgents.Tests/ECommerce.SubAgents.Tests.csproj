@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.4" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <!-- On LIE les fichiers « smelly » présents sous src/ : le test compile et vérifie le MÊME code
+       que dotnet-reviewer refactore → preuve de « comportement constant » après refactoring.
+       (Le projet ne RÉFÉRENCE pas les projets API : il reste exécutable même isolé.) -->
+  <ItemGroup>
+    <Compile Include="../../src/ECommerce.Ordering.Api/Services/OrderProcessor.cs" Link="Linked/OrderProcessor.cs" />
+    <Compile Include="../../src/ECommerce.Catalog.Api/Services/ProductQuery.cs" Link="Linked/ProductQuery.cs" />
+  </ItemGroup>
+
+</Project>

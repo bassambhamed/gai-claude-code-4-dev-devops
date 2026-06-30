@@ -1,0 +1,31 @@
+{
+  "repository": "ecommerce-app-dev",
+  "analysis": "delta",
+  "quality_gate": "fail",
+  "blockers": [
+    {
+      "id": "CH-001",
+      "rule": "Complex Method",
+      "category": "code-health",
+      "severity": "blocker",
+      "file": "src/ECommerce.Ordering.Api/Services/OrderProcessor.cs",
+      "function": "ProcessOrder",
+      "line": 13,
+      "code_health_impact": -1.8,
+      "details": "Complexité cyclomatique 19 ; 4 niveaux d'imbrication.",
+      "guidance": "Extraire la validation et le calcul de remise ; aplatir avec des guard clauses."
+    },
+    {
+      "id": "CH-002",
+      "rule": "Many Function Arguments",
+      "category": "code-health",
+      "severity": "blocker",
+      "file": "src/ECommerce.Catalog.Api/Services/ProductQuery.cs",
+      "function": "Search",
+      "line": 17,
+      "code_health_impact": -0.9,
+      "details": "8 paramètres positionnels.",
+      "guidance": "Introduire un objet-paramètre (record ProductSearchCriteria)."
+    }
+  ]
+}
